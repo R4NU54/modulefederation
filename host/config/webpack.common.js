@@ -1,5 +1,6 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
+const ModuleFederationPlugin = require("webpack/lib/container/ModuleFederationPlugin");
 const helpers = require("./helpers");
 
 module.exports = (env = {}) => {
@@ -11,7 +12,7 @@ module.exports = (env = {}) => {
       extensions: [".js", ".jsx", ".ts", ".tsx"],
     },
     entry: {
-      app: ["./app.entrypoint.tsx"],
+      app: ["./bootstrap.entrypoint.tsx"],
     },
     output: {
       // Ruta para depositar los artefactos de salida.
@@ -43,11 +44,18 @@ module.exports = (env = {}) => {
       ],
     },
     plugins: [
+      new ModuleFederationPlugin({
+        // name: "container",
+        remotes: {
+          clock: "container@http://localhost:3001/clock-container.js",
+          quote: "container@http://localhost:3002/quote-container.js",
+        },
+        shared: ["react", "react-dom/client", "react-router-dom", "@emotion/css"],
+      }),
       new HtmlWebpackPlugin({
         filename: "index.html",
         template: "index.html",
         hash: true,
-        chunks: ["app"],
       }),
       new BundleAnalyzerPlugin({
         analyzerMode: process.env.WEBPACK_SERVE ? "disabled" : "static",

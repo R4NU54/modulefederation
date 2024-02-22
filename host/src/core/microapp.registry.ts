@@ -6,19 +6,18 @@ export interface MicroappInterface {
 
 // Registro de microapps disponibles con sus settings correspondientes.
 export interface MicroappSettings {
-  bundleUrl: string;
-  getInterface: () => MicroappInterface;
+  getInterface: () => Promise<MicroappInterface>;
 }
 
 export type RegisteredMicroapp = "clock" | "quote";
 
 export const microappRegistry: Record<RegisteredMicroapp, MicroappSettings> = {
   clock: {
-    bundleUrl: "http://localhost:3001/clock-microapp.js",
-    getInterface: () => window["microappClock"],
+    getInterface: () => import("clock/widget" as string).then(unwrapMicroappInterface),
   },
   quote: {
-    bundleUrl: "http://localhost:3002/quote-microapp.js",
-    getInterface: () => window["microappQuote"],
+    getInterface: () => import("quote/widget" as string).then(unwrapMicroappInterface),
   },
 };
+
+const unwrapMicroappInterface = ({ MicroappInterface }) => MicroappInterface;

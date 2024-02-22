@@ -11,23 +11,16 @@ export const MicroappLoader: React.FC<MicroappLoaderProps> = ({ microapp }) => {
 
   React.useEffect(() => {
     if (!microappRegistry[microapp]) return;
+    // Accedemos al registry
+    const { getInterface } = microappRegistry[microapp];
 
-    // Línea clave, ¿como puedo acceder a la interfaz de mi microapp cargada por <script>?
-    const { bundleUrl, getInterface } = microappRegistry[microapp];
-    if (!getInterface()) {
-      // Todavía no hemos descargado el bundle, creamos <script>
-      const script = document.createElement("script");
-      script.src = bundleUrl;
-      script.type = "text/javascript";
-      script.onload = () => getInterface().render(containerRef.current);
-      script.onerror = () => script.remove();
-      document.body.appendChild(script);
-    } else {
-      // Bundle descargado previamente, pero no montado todavía
-      getInterface().render(containerRef.current);
-    }
+    // Renderizamos
+    getInterface().then(({ render }) => render(containerRef.current));
 
-    return () => getInterface()?.unmount(containerRef.current);
+    // Desmontamos
+    return () => {
+      getInterface().then(({ unmount }) => unmount(containerRef.current));
+    };
   }, [microapp]);
 
   return <div ref={containerRef} />;

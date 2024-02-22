@@ -1,5 +1,6 @@
 const HtmlWebpackPlugin = require("html-webpack-plugin");
 const BundleAnalyzerPlugin = require("webpack-bundle-analyzer").BundleAnalyzerPlugin;
+const ModuleFederationPlugin = require("webpack/lib/container/ModuleFederationPlugin");
 const helpers = require("./helpers");
 
 module.exports = (env = {}) => {
@@ -11,17 +12,7 @@ module.exports = (env = {}) => {
       extensions: [".js", ".jsx", ".ts", ".tsx"],
     },
     entry: {
-      app: ["./app.entrypoint.tsx"],
-      // Nuevo bundle para ser consumido como microapp
-      microapp: {
-        import: "./microapp.entrypoint.tsx",
-        // Webpack expondrá el contenido de MicroappInterface en window.microappQuote
-        library: {
-          type: "window",
-          name: "microappQuote",
-          export: "MicroappInterface",
-        },
-      },
+      app: ["./bootstrap.entrypoint.tsx"],
     },
     output: {
       // Ruta para depositar los artefactos de salida.
@@ -30,6 +21,7 @@ module.exports = (env = {}) => {
       filename: `${helpers.projectName}-[name].js`,
       // Nombre para los assets de salida.
       assetModuleFilename: "assets/[name].[ext]",
+      uniqueName: helpers.projectName,
     },
     module: {
       rules: [
@@ -53,11 +45,18 @@ module.exports = (env = {}) => {
       ],
     },
     plugins: [
+      new ModuleFederationPlugin({
+        name: "container",
+        // filename: "clock-container.js",
+        exposes: {
+          "./widget": "./microapp.entrypoint",
+        },
+        shared: ["react", "react-dom/client", "@emotion/css"],
+      }),
       new HtmlWebpackPlugin({
         filename: "index.html",
         template: "index.html",
         hash: true,
-        chunks: ["app"],
       }),
       new BundleAnalyzerPlugin({
         analyzerMode: process.env.WEBPACK_SERVE ? "disabled" : "static",
